@@ -383,3 +383,127 @@ input, select {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ==========================================
+   ADAPTATION MOBILE & ÉCRANS ÉTROITS (< 768px)
+   ========================================== */
+
+   @media (max-width: 768px) {
+    /* Conteneur principal passe en vertical */
+    .app-container {
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+  
+    /* La barre latérale devient un en-tête supérieur */
+    .sidebar {
+      width: 100%;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 15px;
+    }
+  
+    .brand {
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  
+    .brand h2 {
+      font-size: 1rem;
+    }
+  
+    /* Le menu devient un ruban défilable horizontalement sur mobile */
+    .menu {
+      flex-direction: row;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 5px;
+      gap: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+  
+    .menu::-webkit-scrollbar {
+      height: 3px;
+    }
+  
+    .menu::-webkit-scrollbar-thumb {
+      background: var(--card-border);
+      border-radius: 4px;
+    }
+  
+    .menu-item {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+  
+    .menu-item.active {
+      border-left: 1px solid var(--card-border);
+      border-bottom: 3px solid var(--accent-purple);
+    }
+  
+    /* Zone de contenu ajustée */
+    .main-content {
+      padding: 15px;
+      height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+  
+    .page-header h1 {
+      font-size: 1.3rem;
+    }
+  
+    .page-header p {
+      font-size: 0.8rem;
+    }
+  
+    /* Passage de toutes les grilles sur 1 seule colonne */
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+  
+    .full-width {
+      grid-column: span 1;
+    }
+  
+    .kpi-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  
+    .actions-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .couture-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    /* Adaptation des cartes de dépenses sur petit écran */
+    .expense-item {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px;
+    }
+  
+    .expense-item span:first-child {
+      grid-column: span 2;
+      font-size: 0.95rem;
+    }
+  
+    .expense-date {
+      text-align: left;
+      grid-column: span 2;
+    }
+  
+    /* Champs de saisie tactiles (plus faciles à presser sur mobile) */
+    input, select, .btn {
+      padding: 12px;
+      font-size: 0.95rem;
+    }
+  }
