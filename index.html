@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atelier Couture - Gestion Principale</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- BARRE LATÉRALE DE NAVIGATION -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>Atelier Couture</h2>
+        <span>Gestion Ariary (Ar)</span>
+      </div>
+      <nav class="menu">
+        <button class="menu-item active" onclick="naviguer('dashboard')">
+          <span>📊</span> Tableau de bord
+        </button>
+        <button class="menu-item" onclick="naviguer('depenses')">
+          <span>💸</span> Gestion des Dépenses
+        </button>
+        <button class="menu-item" onclick="naviguer('calculateur')">
+          <span>🧮</span> Calculateur de Prix
+        </button>
+        <button class="menu-item" onclick="naviguer('coutures')">
+          <span>👗</span> Liste des Coutures
+        </button>
+        <button class="menu-item" onclick="naviguer('commandes')">
+          <span>🧵</span> Commandes & Modèles
+        </button>
+      </nav>
+    </aside>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="main-content">
+
+      <!-- SECTION 1 : TABLEAU DE BORD -->
+      <section id="page-dashboard" class="page-section active">
+        <header class="page-header">
+          <h1>Tableau de Bord Principal</h1>
+          <p>Aperçu général de l'activité de votre atelier</p>
+        </header>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-title">Dépenses Totales</span>
+            <span class="kpi-value" id="dashTotalDepenses">0 Ar</span>
+          </div>
+          <div class="kpi-card highlight">
+            <span class="kpi-title">Capacité Atelier (4 pers.)</span>
+            <span class="kpi-value">36 000 min</span>
+          </div>
+          <div class="kpi-card highlight-success">
+            <span class="kpi-title">Coût Minute Estimé</span>
+            <span class="kpi-value" id="dashCoutMinute">0 Ar/min</span>
+          </div>
+        </div>
+
+        <h2>Accès Rapides</h2>
+        <div class="actions-grid">
+          <div class="action-card" onclick="naviguer('depenses')">
+            <div class="icon">💸</div>
+            <h3>Gérer les Dépenses</h3>
+            <p>Saisir les charges et consulter l'historique horodaté.</p>
+          </div>
+          <div class="action-card" onclick="naviguer('calculateur')">
+            <div class="icon">🧮</div>
+            <h3>Calculer un Prix</h3>
+            <p>Chiffrer une chemise, une robe ou tout autre vêtement sur mesure.</p>
+          </div>
+          <div class="action-card" onclick="naviguer('coutures')">
+            <div class="icon">👗</div>
+            <h3>Liste des Coutures</h3>
+            <p>Consulter les modèles chiffrés et leurs prix enregistrés.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2 : GESTION DES DÉPENSES -->
+      <section id="page-depenses" class="page-section">
+        <header class="page-header">
+          <h1>Gestion des Dépenses</h1>
+          <p>Organisation par catégories, horodatage et calcul des coûts totaux</p>
+        </header>
+
+        <div class="grid">
+          <div class="card">
+            <h2>Saisir une Dépense</h2>
+            <div class="form-group">
+              <label for="depenseNom">Libellé :</label>
+              <input type="text" id="depenseNom" placeholder="Ex: Loyer, Fil de couture...">
+            </div>
+            <div class="form-group">
+              <label for="depenseCategorie">Catégorie :</label>
+              <select id="depenseCategorie">
+                <option value="Salaires & Main d'œuvre">Salaires & Main d'œuvre</option>
+                <option value="Local & Charges">Local & Charges (Loyer, Eau, Elec)</option>
+                <option value="Matières & Fournitures">Matières & Fournitures</option>
+                <option value="Entretien & Équipements">Entretien & Équipements</option>
+                <option value="Marketing & Ventes">Marketing & Ventes</option>
+                <option value="Divers & Administratif">Divers & Administratif</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="depenseMontant">Montant (Ar) :</label>
+              <input type="number" id="depenseMontant" placeholder="0" min="0">
+            </div>
+            <button class="btn btn-add" onclick="ajouterDepense()">+ Ajouter la dépense</button>
+          </div>
+
+          <div class="card">
+            <h2>Somme des Coûts</h2>
+            <div class="kpi-total">
+              <span class="kpi-title">Coût Total Global</span>
+              <span class="kpi-value" id="totalGlobal">0 Ar</span>
+            </div>
+            <h3 class="sub-title">Total par Catégorie</h3>
+            <div id="repartitionCategories" class="category-summary"></div>
+          </div>
+
+          <div class="card full-width">
+            <h2>Liste des Dépenses Enregistrées</h2>
+            <div id="listeDepenses" class="expense-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3 : CALCULATEUR DE PRIX -->
+      <section id="page-calculateur" class="page-section">
+        <header class="page-header">
+          <h1>Calculateur de Prix & Revient</h1>
+          <p>Chiffrage précis par modèle de vêtement (Matières + Temps Atelier + Marge)</p>
+        </header>
+
+        <div class="grid">
+          <div class="card">
+            <h2>Fiche Technique & Référence</h2>
+            
+            <div class="form-group">
+              <label for="modelRef">Référence du Modèle :</label>
+              <input type="text" id="modelRef" placeholder="Ex: CHM-2026-001">
+            </div>
+
+            <div class="form-group">
+              <label for="modelNom">Nom du Vêtement :</label>
+              <input type="text" id="modelNom" placeholder="Ex: Chemise Homme Col Italien">
+            </div>
+
+            <div class="form-group">
+              <label for="modelTemps">Temps de Confection (en minutes) :</label>
+              <input type="number" id="modelTemps" placeholder="Ex: 70 min" min="0" oninput="calculerPrixRevient()">
+            </div>
+
+            <h3 class="sub-title">Matières & Fournitures</h3>
+
+            <div class="form-group">
+              <label for="tissuMetrage">Métrage Tissu (mètres) :</label>
+              <input type="number" id="tissuMetrage" placeholder="Ex: 1.6" step="0.1" min="0" oninput="calculerPrixRevient()">
+            </div>
+
+            <div class="form-group">
+              <label for="tissuPrixMetre">Prix du Tissu au Mètre (Ar) :</label>
+              <input type="number" id="tissuPrixMetre" placeholder="Ex: 15000" min="0" oninput="calculerPrixRevient()">
+            </div>
+
+            <div class="form-group">
+              <label for="fournituresPrix">Fournitures / Mercerie (Ar) :</label>
+              <input type="number" id="fournituresPrix" placeholder="Ex: 5000" min="0" oninput="calculerPrixRevient()">
+            </div>
+
+            <div class="form-group">
+              <label for="margePourcent">Marge Souhaitée (%) :</label>
+              <input type="number" id="margePourcent" value="40" min="0" oninput="calculerPrixRevient()">
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Résultat du Chiffrage</h2>
+
+            <div class="calc-breakdown">
+              <div class="calc-row">
+                <span>Matières Premières (Tissu) :</span>
+                <strong id="resTissu">0 Ar</strong>
+              </div>
+              <div class="calc-row">
+                <span>Mercerie & Accessoires :</span>
+                <strong id="resFournitures">0 Ar</strong>
+              </div>
+              <div class="calc-row">
+                <span>Main-d'œuvre & Atelier :</span>
+                <strong id="resAtelier">0 Ar</strong>
+              </div>
+              <hr class="divider">
+              <div class="calc-row highlight-row">
+                <span>Coût de Revient Total :</span>
+                <strong id="resPrixRevient">0 Ar</strong>
+              </div>
+              <div class="calc-row">
+                <span>Bénéfice Net :</span>
+                <strong id="resBenefice" style="color: var(--accent-green);">0 Ar</strong>
+              </div>
+            </div>
+
+            <div class="kpi-total" style="margin-top: 20px;">
+              <span class="kpi-title">Prix de Vente Conseillé</span>
+              <span class="kpi-value" id="resPrixVente" style="font-size: 2rem;">0 Ar</span>
+            </div>
+
+            <!-- NOUVEAU BOUTON D'ENREGISTREMENT -->
+            <button class="btn btn-add" style="margin-top: 15px;" onclick="ajouterALaListeCoutures()">
+              ➕ Ajouter à la liste des coutures
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4 : LISTE DES COUTURES (NOUVEAU) -->
+      <section id="page-coutures" class="page-section">
+        <header class="page-header">
+          <h1>Liste des Coutures Enregistrées</h1>
+          <p>Répertoire des modèles chiffrés, leurs temps de fabrication et prix de vente</p>
+        </header>
+
+        <div class="card full-width">
+          <h2>Modèles & Vêtements Chiffrés</h2>
+          <div id="listeCoutures" class="couture-grid"></div>
+        </div>
+      </section>
+
+      <!-- SECTION 5 : COMMANDES -->
+      <section id="page-commandes" class="page-section">
+        <header class="page-header">
+          <h1>Commandes & Modèles</h1>
+          <p>Suivi de la production</p>
+        </header>
+        <div class="card">
+          <p style="color: var(--text-secondary);">Module en cours d'intégration...</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="calculateur.js"></script>
+</body>
+</html>
