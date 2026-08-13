@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Atelier Couture - Gestion Principale</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- FullCalendar CSS & JS -->
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+  <title>Atelier Couture - Gestion Principale</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>  
 
   <div class="app-container">
     
@@ -19,6 +23,9 @@
         <button class="menu-item active" onclick="naviguer('dashboard')">
           <span>📊</span> Tableau de bord
         </button>
+        <button class="menu-item" onclick="naviguer('planning')">
+          <span>📅</span> Planning & Livraisons
+        </button>
         <button class="menu-item" onclick="naviguer('depenses')">
           <span>💸</span> Gestion des Dépenses
         </button>
@@ -29,19 +36,45 @@
           <span>👗</span> Liste des Coutures
         </button>
         <button class="menu-item" onclick="naviguer('commandes')">
-          <span>🧵</span> Commandes & Modèles
+          <span>🧵</span> Commandes & Acomptes
         </button>
       </nav>
+
+      <!-- EXPORTATION / IMPORTATION DE SAUVEGARDE JSON -->
+      <div class="backup-section" style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--card-border);">
+        <span class="kpi-title" style="margin-bottom: 8px;">Sauvegarde Fichier</span>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="btn btn-add" style="background-color: var(--card-border);" onclick="exporterDonneesJSON()">
+            💾 Exporter (.json)
+          </button>
+          <button class="btn btn-add" style="background-color: var(--accent-blue);" onclick="document.getElementById('importFile').click()">
+            📂 Importer (.json)
+          </button>
+          <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importerDonneesJSON(event)">
+        </div>
+      </div>
     </aside>
 
     <!-- CONTENU PRINCIPAL -->
     <main class="main-content">
+
+      <!-- SECTION PLANNING -->
+      <section id="page-planning" class="page-section">
+        <header class="page-header">
+          <h1>Planning de Production & Livraisons</h1>
+          <p>Suivi visuel des dates de livraison prévues</p>
+        </header>
+        <div id="calendar" style="background: white; padding: 15px; border-radius: 8px; color: #1f2937;"></div>
+      </section>
 
       <!-- SECTION 1 : TABLEAU DE BORD -->
       <section id="page-dashboard" class="page-section active">
         <header class="page-header">
           <h1>Tableau de Bord Principal</h1>
           <p>Aperçu général de l'activité de votre atelier</p>
+          <button class="btn btn-danger" onclick="reinitialiserDonnees()">
+            🗑️ Remettre à zéro
+          </button>
         </header>
 
         <div class="kpi-grid">
@@ -49,10 +82,7 @@
             <span class="kpi-title">Dépenses Totales</span>
             <span class="kpi-value" id="dashTotalDepenses">0 Ar</span>
           </div>
-          <div class="kpi-card highlight">
-            <span class="kpi-title">Capacité Atelier (4 pers.)</span>
-            <span class="kpi-value">36 000 min</span>
-          </div>
+          
           <div class="kpi-card highlight-success">
             <span class="kpi-title">Coût Minute Estimé</span>
             <span class="kpi-value" id="dashCoutMinute">0 Ar/min</span>
@@ -61,6 +91,11 @@
 
         <h2>Accès Rapides</h2>
         <div class="actions-grid">
+          <div class="action-card" onclick="naviguer('planning')">
+            <div class="icon">📅</div>
+            <h3>Planning</h3>
+            <p>Consulter les dates de livraison des commandes.</p>
+          </div>
           <div class="action-card" onclick="naviguer('depenses')">
             <div class="icon">💸</div>
             <h3>Gérer les Dépenses</h3>
@@ -82,33 +117,47 @@
       <!-- SECTION 2 : GESTION DES DÉPENSES -->
       <section id="page-depenses" class="page-section">
         <header class="page-header">
-          <h1>Gestion des Dépenses</h1>
-          <p>Organisation par catégories, horodatage et calcul des coûts totaux</p>
+          <h1>Gestion des Dépenses & Achats</h1>
+          <p>Saisie détaillée des tissus, fournitures, charges et salaires</p>
         </header>
 
         <div class="grid">
           <div class="card">
-            <h2>Saisir une Dépense</h2>
+            <h2>➕ Enregistrer une Dépense Détaillée</h2>
+            
             <div class="form-group">
-              <label for="depenseNom">Libellé :</label>
-              <input type="text" id="depenseNom" placeholder="Ex: Loyer, Fil de couture...">
-            </div>
-            <div class="form-group">
-              <label for="depenseCategorie">Catégorie :</label>
-              <select id="depenseCategorie">
+              <label for="depenseCategorie">Catégorie Principale :</label>
+              <select id="depenseCategorie" onchange="updateSubCategories()">
+                <option value="">-- Choisir une catégorie --</option>
+                <option value="Tissus - Maille & Jersey">Tissus - Maille & Jersey</option>
+                <option value="Tissus - Vêtements de travail">Tissus - Vêtements de travail</option>
+                <option value="Fournitures & Mercerie">Fournitures & Mercerie</option>
+                <option value="Étiquettes & Emballage">Étiquettes & Emballage</option>
                 <option value="Salaires & Main d'œuvre">Salaires & Main d'œuvre</option>
-                <option value="Local & Charges">Local & Charges (Loyer, Eau, Elec)</option>
-                <option value="Matières & Fournitures">Matières & Fournitures</option>
+                <option value="Local & Charges (Loyer, Eau, Elec)">Local & Charges (Loyer, Eau, Elec)</option>
                 <option value="Entretien & Équipements">Entretien & Équipements</option>
-                <option value="Marketing & Ventes">Marketing & Ventes</option>
-                <option value="Divers & Administratif">Divers & Administratif</option>
+                <option value="Divers & Marketing">Divers & Marketing</option>
               </select>
             </div>
+
             <div class="form-group">
-              <label for="depenseMontant">Montant (Ar) :</label>
-              <input type="number" id="depenseMontant" placeholder="0" min="0">
+              <label for="depenseSousCategorie">Article / Fourniture Précise :</label>
+              <select id="depenseSousCategorie">
+                <option value="">-- Sélectionnez d'abord une catégorie --</option>
+              </select>
             </div>
-            <button class="btn btn-add" onclick="ajouterDepense()">+ Ajouter la dépense</button>
+
+            <div class="form-group">
+              <label for="depenseMontant">Montant Total (Ar) :</label>
+              <input type="number" id="depenseMontant" placeholder="Ex: 50000" min="0">
+            </div>
+
+            <div class="form-group">
+              <label for="depenseNote">Quantité / Note (Optionnel) :</label>
+              <input type="text" id="depenseNote" placeholder="Ex: 10 mètres, 5 cônes, etc.">
+            </div>
+
+            <button class="btn btn-add" onclick="ajouterDepense()">💾 Enregistrer la dépense</button>
           </div>
 
           <div class="card">
@@ -209,7 +258,6 @@
               <span class="kpi-value" id="resPrixVente" style="font-size: 2rem;">0 Ar</span>
             </div>
 
-            <!-- NOUVEAU BOUTON D'ENREGISTREMENT -->
             <button class="btn btn-add" style="margin-top: 15px;" onclick="ajouterALaListeCoutures()">
               ➕ Ajouter à la liste des coutures
             </button>
@@ -217,27 +265,73 @@
         </div>
       </section>
 
-      <!-- SECTION 4 : LISTE DES COUTURES (NOUVEAU) -->
+      <!-- SECTION 4 : LISTE DES COUTURES ENREGISTRÉES -->
       <section id="page-coutures" class="page-section">
         <header class="page-header">
-          <h1>Liste des Coutures Enregistrées</h1>
-          <p>Répertoire des modèles chiffrés, leurs temps de fabrication et prix de vente</p>
+          <h1>Répertoire des Coutures & Modèles</h1>
+          <p>Modifier le prix de vente et passer directement une commande client</p>
         </header>
 
         <div class="card full-width">
-          <h2>Modèles & Vêtements Chiffrés</h2>
-          <div id="listeCoutures" class="couture-grid"></div>
+          <h2>Catalogue des Modèles</h2>
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Réf.</th>
+                  <th>Modèle</th>
+                  <th>Temps</th>
+                  <th>Tissu</th>
+                  <th>Coût Revient</th>
+                  <th>Prix Vente (Ar)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="listeCouturesTable">
+                <!-- Injecté dynamiquement par JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <!-- SECTION 5 : COMMANDES -->
+      <!-- SECTION 5 : COMMANDES CLIENTS -->
       <section id="page-commandes" class="page-section">
         <header class="page-header">
-          <h1>Commandes & Modèles</h1>
-          <p>Suivi de la production</p>
+          <h1>Commandes Clients & Suivi</h1>
+          <p>Historique des commandes passées via le catalogue ou la saisie manuelle</p>
         </header>
-        <div class="card">
-          <p style="color: var(--text-secondary);">Module en cours d'intégration...</p>
+
+        <div class="grid">
+          <div class="card">
+            <h2>➕ Saisie Manuelle de Commande</h2>
+            <div class="form-group">
+              <label for="cmdClient">Nom du Client :</label>
+              <input type="text" id="cmdClient" placeholder="Ex: Jean Dupont">
+            </div>
+            <div class="form-group">
+              <label for="cmdModele">Vêtement / Modèle :</label>
+              <input type="text" id="cmdModele" placeholder="Ex: 5 Chemises Homme">
+            </div>
+            <div class="form-group">
+              <label for="cmdTotal">Prix Total Commande (Ar) :</label>
+              <input type="number" id="cmdTotal" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label for="cmdAcompte">Acompte Payé (Ar) :</label>
+              <input type="number" id="cmdAcompte" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label for="cmdDateLivraison">Date de Livraison Prévue :</label>
+              <input type="date" id="cmdDateLivraison">
+            </div>
+            <button class="btn btn-add" onclick="enregistrerCommandeManuelle()">🧵 Enregistrer la commande</button>
+          </div>
+
+          <div class="card full-width">
+            <h2>Suivi des Commandes Clients</h2>
+            <div id="listeCommandes" class="expense-list"></div>
+          </div>
         </div>
       </section>
 
@@ -245,6 +339,7 @@
   </div>
 
   <script src="script.js"></script>
+  <script src="planning.js"></script>
   <script src="calculateur.js"></script>
 </body>
 </html>

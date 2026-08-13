@@ -507,3 +507,40 @@ input, select {
       font-size: 0.95rem;
     }
   }
+  /* Zone de sauvegarde JSON dans la barre latérale */
+.backup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.backup-section .btn {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  justify-content: center;
+}
+
+/* Table Styles */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.data-table th, 
+.data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--card-border, #e0e0e0);
+}
+
+.data-table th {
+  background-color: rgba(0, 0, 0, 0.03);
+  font-weight: 600;
+}
+
+.data-table input[type="number"] {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
