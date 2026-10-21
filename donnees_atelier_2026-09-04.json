@@ -1,0 +1,65 @@
+{
+  "depenses": [
+    {
+      "nom": "Salaire Couturier 1 (moi de janvier)",
+      "categorie": "Salaires & Main d'œuvre",
+      "montant": 100000,
+      "date": "04/09/2026 à 10:05"
+    },
+    {
+      "nom": "Salaire Couturier 2 (mois de mars)",
+      "categorie": "Salaires & Main d'œuvre",
+      "montant": 12000,
+      "date": "04/09/2026 à 10:06"
+    }
+  ],
+  "listeCoutures": [
+    {
+      "ref": "model",
+      "nom": "k78",
+      "temps": 848448,
+      "metrage": 1.5,
+      "prixRevient": 3000,
+      "prixVente": 12000
+    }
+  ],
+  "commandes": [
+    {
+      "client": "joel",
+      "modele": "1x k78 (model)",
+      "total": 4286,
+      "acompte": 15000,
+      "reste": -10714,
+      "dateLivraison": "2026 12 11",
+      "date": "03/09/2026"
+    },
+    {
+      "client": "fezefzef",
+      "modele": "12x k78 (model)",
+      "total": 180000,
+      "acompte": 10000,
+      "reste": 170000,
+      "dateLivraison": "2026 12 11",
+      "date": "03/09/2026"
+    },
+    {
+      "client": "kajaz",
+      "modele": "dazdazd",
+      "total": 121000,
+      "acompte": 1555,
+      "reste": 119445,
+      "dateLivraison": "2026-12-31",
+      "date": "04/09/2026"
+    },
+    {
+      "client": "sdadazd",
+      "modele": "1x k78 (model)",
+      "total": 12000,
+      "acompte": 1222,
+      "reste": 10778,
+      "dateLivraison": "2026-11-12",
+      "date": "04/09/2026"
+    }
+  ],
+  "dateExportation": "2026-09-04T07:08:18.160Z"
+}

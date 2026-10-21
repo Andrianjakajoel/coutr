@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion de Stock - Atelier Textile (Desktop)</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Option avec un simple lien style bouton -->
+<a href="../index.html" class="btn-nav">
+  <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
+</a>
+
+<!-- OU Option avec un bouton HTML -->
+<button onclick="window.location.href='../index.html'">
+  Retour à l'accueil
+</button>
+
+  <!-- En-tête Desktop -->
+  <header class="header">
+    <div class="logo">
+      <i class="fa-solid fa-scissors"></i>
+      <span>TexStock ERP</span>
+    </div>
+    <div class="header-stats">
+      <div class="stat-badge"><i class="fa-solid fa-boxes-stacked"></i> <span id="total-articles">0</span> Articles</div>
+      <div class="stat-badge warning"><i class="fa-solid fa-triangle-exclamation"></i> <span id="total-alerts">0</span> Alertes</div>
+    </div>
+  </header>
+
+  <!-- Layout Principal (Grid 3 Colonnes) -->
+  <main class="dashboard-grid">
+
+    <!-- COLONNE 1 : AJOUT DE STOCK -->
+    <section class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-square-plus"></i> Entrée de Stock</h2>
+      </div>
+      
+      <form id="add-form" onsubmit="submitStock(event)">
+        <div class="form-group">
+          <label for="code">Code Article / Référence</label>
+          <input type="text" id="code" placeholder="Ex: TIS-COT-01" required>
+        </div>
+
+        <div class="form-group">
+          <label for="name">Désignation / Nom du Tissu</label>
+          <input type="text" id="name" placeholder="Ex: Coton Blanc 180g" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">Catégorie</label>
+            <select id="category" required>
+              <option value="Tissu">Tissu / Rouleau</option>
+              <option value="Mercerie">Mercerie (Bouton, Zip)</option>
+              <option value="Fil">Fil / Bobine</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="unit">Unité</label>
+            <select id="unit" required>
+              <option value="Mètres">Mètres</option>
+              <option value="Pièces">Pièces</option>
+              <option value="Bobines">Bobines</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="qty">Quantité Entrante</label>
+            <input type="number" step="0.1" id="qty" placeholder="100" required>
+          </div>
+          <div class="form-group">
+            <label for="alert">Seuil Alerte Min.</label>
+            <input type="number" step="0.1" id="alert" placeholder="15" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Emplacement en Atelier</label>
+          <input type="text" id="location" placeholder="Ex: Etagère A3 - Mezzanine">
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-circle-check"></i> Enregistrer l'Entrée
+        </button>
+      </form>
+    </section>
+
+    <!-- COLONNE 2 : LISTE DES FOURNITURES & EMPLACEMENTS -->
+    <section class="card">
+      <div class="card-header flex-header">
+        <h2><i class="fa-solid fa-list-check"></i> Liste des Fournitures</h2>
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="search" onkeyup="renderTables()" placeholder="Rechercher...">
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="desktop-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Désignation</th>
+              <th>Catégorie</th>
+              <th>Emplacement</th>
+            </tr>
+          </thead>
+          <tbody id="list-tbody">
+            <!-- Injecté par JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- COLONNE 3 : RESTE DANS LE STOCK & ACTIONS DE SORTIE -->
+    <section class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-chart-line"></i> Reste en Stock</h2>
+      </div>
+
+      <div class="table-container">
+        <table class="desktop-table">
+          <thead>
+            <tr>
+              <th>Désignation</th>
+              <th>Reste</th>
+              <th>État</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="remain-tbody">
+            <!-- Injecté par JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

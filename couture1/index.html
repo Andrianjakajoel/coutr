@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestionnaire de Budget & Planificateur</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  <!-- FontAwesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Option avec un simple lien style bouton -->
+<a href="gestionstock/gestion.html" class="btn-nav">
+  Aller à la Gestion de Stock
+</a>
+
+<!-- OU Option avec un bouton HTML -->
+<button onclick="window.location.href='gestionstock/gestion.html'">
+  Aller à la Gestion de Stock
+</button>
+
+  <div class="app-container">
+    <!-- Barre latérale -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h2><i class="fa-solid fa-wallet"></i> MyManager</h2>
+        <span>Budget & Agenda</span>
+      </div>
+
+      <nav class="menu">
+        <button class="menu-item active" onclick="switchPage('dashboard')">
+          <i class="fa-solid fa-chart-pie"></i> Tableau de bord
+        </button>
+        <button class="menu-item" onclick="switchPage('expenses')">
+          <i class="fa-solid fa-money-bill-wave"></i> Dépenses
+        </button>
+        <button class="menu-item" onclick="switchPage('calendar')">
+          <i class="fa-solid fa-calendar-days"></i> Calendrier
+        </button>
+      </nav>
+
+      <div class="backup-section">
+        <button class="btn btn-secondary" onclick="exportData()">
+          <i class="fa-solid fa-download"></i> Exporter JSON
+        </button>
+        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">
+          <i class="fa-solid fa-upload"></i> Importer JSON
+        </button>
+        <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+      </div>
+    </aside>
+
+    <!-- Contenu Principal -->
+    <main class="main-content">
+      
+      <!-- PAGE 1: TABLEAU DE BORD -->
+      <section id="dashboard" class="page-section active">
+        <div class="page-header">
+          <h1>Tableau de bord</h1>
+          <p>Vue d'ensemble de vos finances et événements à venir</p>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card highlight">
+            <span class="kpi-title">Total Dépenses</span>
+            <div class="kpi-value" id="kpi-total">0,00 Ar</div>
+          </div>
+          <div class="kpi-card highlight-success">
+            <span class="kpi-title">Nombre de Dépenses</span>
+            <div class="kpi-value" id="kpi-count">0</div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h2>Répartition par Catégorie</h2>
+            <div id="category-summary"></div>
+          </div>
+          <div class="card">
+            <h2>Prochains Événements</h2>
+            <div id="upcoming-events"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 2: DÉPENSES -->
+      <section id="expenses" class="page-section">
+        <div class="page-header">
+          <h1>Gestion des Dépenses</h1>
+          <p>Saisissez et catégorisez vos dépenses quotidiennes</p>
+        </div>
+
+        <div class="grid">
+          <!-- Formulaire -->
+          <div class="card">
+            <h2>Ajouter une Dépense</h2>
+            <form id="expense-form" onsubmit="addExpense(event)">
+              <div class="form-group">
+                <label for="exp-title">Libellé</label>
+                <input type="text" id="exp-title" placeholder="ex: Courses supermarché" required>
+              </div>
+              <div class="form-group">
+                <label for="exp-amount">Montant (Ar)</label>
+                <input type="number" id="exp-amount" placeholder="0.00" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label for="exp-category">Catégorie</label>
+                <select id="exp-category" required>
+                  <option value="Alimentation">Alimentation</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Logement">Logement</option>
+                  <option value="Loisirs">Loisirs</option>
+                  <option value="Santé">Santé</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="exp-date">Date</label>
+                <input type="date" id="exp-date" required>
+              </div>
+              <button type="submit" class="btn btn-add">
+                <i class="fa-solid fa-plus"></i> Enregistrer la dépense
+              </button>
+            </form>
+          </div>
+
+          <!-- Liste des Dépenses -->
+          <div class="card">
+            <h2>Historique des Dépenses</h2>
+            <div class="expense-list" id="expense-list">
+              <!-- Rempli dynamiquement -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 3: CALENDRIER -->
+      <section id="calendar" class="page-section">
+        <div class="page-header">
+          <h1>Planificateur & Agenda</h1>
+          <p>Gérez vos événements et rappels</p>
+        </div>
+
+        <div class="calendar-layout">
+          <div class="card">
+            <div id="calendar-widget"></div>
+          </div>
+          <div class="card">
+            <h2>Planifier un événement</h2>
+            <form id="event-form" onsubmit="addEvent(event)">
+              <div class="form-group">
+                <label for="evt-title">Titre de l'événement</label>
+                <input type="text" id="evt-title" placeholder="ex: Rendez-vous médical" required>
+              </div>
+              <div class="form-group">
+                <label for="evt-start">Date de début</label>
+                <input type="datetime-local" id="evt-start" required>
+              </div>
+              <div class="form-group">
+                <label for="evt-end">Date de fin (optionnel)</label>
+                <input type="datetime-local" id="evt-end">
+              </div>
+              <button type="submit" class="btn btn-add">
+                <i class="fa-solid fa-calendar-plus"></i> Ajouter au calendrier
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- COMPOSANT MODALE SUR-MESURE -->
+  <div class="modal-overlay" id="custom-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-title">Titre Modale</h3>
+        <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Contenu dynamique -->
+      </div>
+      <div class="modal-footer" id="modal-footer">
+        <!-- Boutons dynamiques -->
+      </div>
+    </div>
+  </div>
+
+  <!-- FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/fr.js"></script>
+  <!-- JavaScript Application -->
+  <script src="app.js"></script>
+  <script src="planning.js"></script>
+  <script src="calculateur.js"></script>
+</body>
+</html>
