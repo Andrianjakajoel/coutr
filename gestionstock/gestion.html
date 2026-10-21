@@ -9,6 +9,11 @@
 </head>
 <body>
 
+  <!-- Bouton de retour à l'accueil -->
+  <a href="../index.html" class="btn-nav">
+    <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
+  </a>
+
   <!-- En-tête Desktop -->
   <header class="header">
     <div class="logo">
@@ -19,20 +24,6 @@
       <div class="stat-badge"><i class="fa-solid fa-boxes-stacked"></i> <span id="total-articles">0</span> Articles</div>
       <div class="stat-badge warning"><i class="fa-solid fa-triangle-exclamation"></i> <span id="total-alerts">0</span> Alertes</div>
     </div>
-
-    <div class="header-actions">
-      <!-- Bouton de téléchargement du fichier .json -->
-      <button class="btn-sm" onclick="exportJSON()">
-        <i class="fa-solid fa-download"></i> Sauvegarder .JSON
-      </button>
-      
-      <!-- Bouton d'importation d'un fichier .json -->
-      <label class="btn-sm" style="cursor: pointer;">
-        <i class="fa-solid fa-upload"></i> Importer .JSON
-        <input type="file" accept=".json" onchange="importJSON(event)" style="display:none;">
-      </label>
-    </div>
-
   </header>
 
   <!-- Layout Principal (Grid 3 Colonnes) -->
@@ -114,6 +105,7 @@
               <th>Désignation</th>
               <th>Catégorie</th>
               <th>Emplacement</th>
+              <th>Action</th> <!-- En-tête pour la suppression -->
             </tr>
           </thead>
           <tbody id="list-tbody">

@@ -222,3 +222,32 @@ input:focus, select:focus {
   cursor: pointer;
 }
 .btn-out:hover { background: #e2e8f0; }
+
+/* Style du bouton de navigation */
+.btn-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* Espace entre une icône et le texte */
+  padding: 10px 20px;
+  background-color: #007bff; /* Couleur de fond (Bleu) */
+  color: #ffffff;            /* Couleur du texte */
+  text-decoration: none;     /* Enlève le soulignement du lien */
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;        /* Bords arrondis */
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Effet au survol de la souris */
+.btn-nav:hover {
+  background-color: #0056b3; /* Bleu plus foncé */
+  transform: translateY(-1px); /* Légère élévation */
+}
+
+/* Effet au clic */
+.btn-nav:active {
+  transform: translateY(0);
+}

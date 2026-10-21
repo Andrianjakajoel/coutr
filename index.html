@@ -2,133 +2,109 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Atelier Couture</title>
+  
   <!-- FullCalendar CSS & JS -->
-  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
-  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-  <title>Atelier Couture - Gestion Principale</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/fr.js"></script>
+  
   <link rel="stylesheet" href="style.css">
 </head>
-<body>  
+<body>
 
   <div class="app-container">
     
-    <!-- BARRE LATÉRALE DE NAVIGATION -->
-    <aside class="sidebar">
+    <!-- BARRE DE NAVIGATION SUPÉRIEURE -->
+    <header class="top-navbar">
       <div class="brand">
         <h2>Atelier Couture</h2>
-        <span>Gestion Ariary (Ar)</span>
+        <span>Gestion & Planning</span>
       </div>
+
       <nav class="menu">
-        <button class="menu-item active" onclick="naviguer('dashboard')">
-          <span>📊</span> Tableau de bord
-        </button>
-        <button class="menu-item" onclick="naviguer('planning')">
-          <span>📅</span> Planning & Livraisons
-        </button>
-        <button class="menu-item" onclick="naviguer('depenses')">
-          <span>💸</span> Gestion des Dépenses
-        </button>
-        <button class="menu-item" onclick="naviguer('calculateur')">
-          <span>🧮</span> Calculateur de Prix
-        </button>
-        <button class="menu-item" onclick="naviguer('coutures')">
-          <span>👗</span> Liste des Coutures
-        </button>
-        <button class="menu-item" onclick="naviguer('commandes')">
-          <span>🧵</span> Commandes & Acomptes
-        </button>
+        <button class="menu-item active" onclick="naviguer('dashboard')">📊 Tableau de bord</button>
+        <button class="menu-item" onclick="naviguer('depenses')">💰 Dépenses</button>
+        <button class="menu-item" onclick="naviguer('coutures')">🧵 Modèles / Coutures</button>
+        <button class="menu-item" onclick="naviguer('commandes')">📋 Commandes</button>
+        <button class="menu-item" onclick="naviguer('planning')">📅 Planning</button>
+        <a href="gestionstock/gestion.html" class="btn-nav-stock">📦 Gestion de Stock</a>
       </nav>
 
-      <!-- EXPORTATION / IMPORTATION DE SAUVEGARDE JSON -->
-      <div class="backup-section" style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--card-border);">
-        <span class="kpi-title" style="margin-bottom: 8px;">Sauvegarde Fichier</span>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button class="btn btn-add" style="background-color: var(--card-border);" onclick="exporterDonneesJSON()">
-            💾 Exporter (.json)
-          </button>
-          <button class="btn btn-add" style="background-color: var(--accent-blue);" onclick="document.getElementById('importFile').click()">
-            📂 Importer (.json)
-          </button>
-          <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importerDonneesJSON(event)">
-        </div>
+      <div class="backup-section">
+        <button class="btn btn-sm btn-outline" onclick="exporterDonneesJSON()" title="Exporter Données">📥 Exporter</button>
+        <label class="btn btn-sm btn-outline" title="Importer Données" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+          📤 Importer
+          <input type="file" id="importFile" accept=".json" onchange="importerDonneesJSON(event)" style="display: none;">
+        </label>
+        <button class="btn btn-sm btn-danger-outline" onclick="reinitialiserDonnees()" title="Réinitialiser">⚠️ Réinit.</button>
       </div>
-    </aside>
+    </header>
 
-    <!-- CONTENU PRINCIPAL -->
+    <!-- ZONE DE CONTENU PRINCIPALE -->
     <main class="main-content">
 
-      <!-- SECTION PLANNING -->
-      <section id="page-planning" class="page-section">
-        <header class="page-header">
-          <h1>Planning de Production & Livraisons</h1>
-          <p>Suivi visuel des dates de livraison prévues</p>
-        </header>
-        <div id="calendar" style="background: white; padding: 15px; border-radius: 8px; color: #1f2937;"></div>
-      </section>
-
-      <!-- SECTION 1 : TABLEAU DE BORD -->
+      <!-- PAGE : TABLEAU DE BORD -->
       <section id="page-dashboard" class="page-section active">
-        <header class="page-header">
-          <h1>Tableau de Bord Principal</h1>
-          <p>Aperçu général de l'activité de votre atelier</p>
-          <button class="btn btn-danger" onclick="reinitialiserDonnees()">
-            🗑️ Remettre à zéro
-          </button>
-        </header>
+        <div class="page-header">
+          <h1>Tableau de Bord</h1>
+          <p>Vue globale des finances et capacités de l'atelier.</p>
+        </div>
 
         <div class="kpi-grid">
-          <div class="kpi-card">
-            <span class="kpi-title">Dépenses Totales</span>
-            <span class="kpi-value" id="dashTotalDepenses">0 Ar</span>
+          <div class="kpi-card highlight">
+            <span class="kpi-title">Total Dépenses</span>
+            <div id="dashTotalDepenses" class="kpi-value">0 Ar</div>
           </div>
-          
           <div class="kpi-card highlight-success">
-            <span class="kpi-title">Coût Minute Estimé</span>
-            <span class="kpi-value" id="dashCoutMinute">0 Ar/min</span>
+            <span class="kpi-title">Coût Minute Théorique</span>
+            <div id="dashCoutMinute" class="kpi-value">0 Ar/min</div>
           </div>
         </div>
 
-        <h2>Accès Rapides</h2>
         <div class="actions-grid">
-          <div class="action-card" onclick="naviguer('planning')">
-            <div class="icon">📅</div>
-            <h3>Planning</h3>
-            <p>Consulter les dates de livraison des commandes.</p>
-          </div>
           <div class="action-card" onclick="naviguer('depenses')">
-            <div class="icon">💸</div>
+            <div class="icon">💰</div>
             <h3>Gérer les Dépenses</h3>
-            <p>Saisir les charges et consulter l'historique horodaté.</p>
-          </div>
-          <div class="action-card" onclick="naviguer('calculateur')">
-            <div class="icon">🧮</div>
-            <h3>Calculer un Prix</h3>
-            <p>Chiffrer une chemise, une robe ou tout autre vêtement sur mesure.</p>
+            <p>Ajouter des achats de tissus, mercerie, charges ou salaires.</p>
           </div>
           <div class="action-card" onclick="naviguer('coutures')">
-            <div class="icon">👗</div>
-            <h3>Liste des Coutures</h3>
-            <p>Consulter les modèles chiffrés et leurs prix enregistrés.</p>
+            <div class="icon">🧵</div>
+            <h3>Catalogue & Calculateur</h3>
+            <p>Calculer les prix de revient et enregistrer vos modèles.</p>
+          </div>
+          <div class="action-card" onclick="naviguer('commandes')">
+            <div class="icon">📋</div>
+            <h3>Suivi Commandes</h3>
+            <p>Enregistrer les acomptes et consulter les restes à payer.</p>
+          </div>
+          <div class="action-card" onclick="naviguer('planning')">
+            <div class="icon">📅</div>
+            <h3>Planning Livraisons</h3>
+            <p>Consulter les dates de livraison prévues sur le calendrier.</p>
           </div>
         </div>
       </section>
 
-      <!-- SECTION 2 : GESTION DES DÉPENSES -->
+      <!-- PAGE : DÉPENSES -->
       <section id="page-depenses" class="page-section">
-        <header class="page-header">
-          <h1>Gestion des Dépenses & Achats</h1>
-          <p>Saisie détaillée des tissus, fournitures, charges et salaires</p>
-        </header>
+        <div class="page-header">
+          <h1>Gestion des Dépenses</h1>
+          <p>Saisie et classification de l'ensemble des frais de l'atelier.</p>
+        </div>
 
-        <div class="grid">
-          <div class="card">
-            <h2>➕ Enregistrer une Dépense Détaillée</h2>
+        <!-- DISPOSITION CÔTE À CÔTE : Formulaire réduit à gauche / Tableau synthétique à droite avec scroll horizontal -->
+        <div class="depenses-layout-side">
+          
+          <!-- Formulaire d'ajout (Compact et réduit) -->
+          <div class="card form-compact-card">
+            <h2>Nouveau Frais</h2>
             
             <div class="form-group">
-              <label for="depenseCategorie">Catégorie Principale :</label>
+              <label for="depenseCategorie">Catégorie Principale</label>
               <select id="depenseCategorie" onchange="updateSubCategories()">
-                <option value="">-- Choisir une catégorie --</option>
+                <option value="">-- Sélectionner --</option>
                 <option value="Tissus - Maille & Jersey">Tissus - Maille & Jersey</option>
                 <option value="Tissus - Vêtements de travail">Tissus - Vêtements de travail</option>
                 <option value="Fournitures & Mercerie">Fournitures & Mercerie</option>
@@ -141,196 +117,230 @@
             </div>
 
             <div class="form-group">
-              <label for="depenseSousCategorie">Article / Fourniture Précise :</label>
+              <label for="depenseSousCategorie">Article / Précision</label>
               <select id="depenseSousCategorie">
-                <option value="">-- Sélectionnez d'abord une catégorie --</option>
+                <option value="">-- Sélectionner l'article --</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="depenseMontant">Montant Total (Ar) :</label>
+              <label for="depenseMontant">Montant (Ar)</label>
               <input type="number" id="depenseMontant" placeholder="Ex: 50000" min="0">
             </div>
 
             <div class="form-group">
-              <label for="depenseNote">Quantité / Note (Optionnel) :</label>
-              <input type="text" id="depenseNote" placeholder="Ex: 10 mètres, 5 cônes, etc.">
+              <label for="depenseNote">Note Complémentaire</label>
+              <input type="text" id="depenseNote" placeholder="Ex: Fournisseur X">
             </div>
 
-            <button class="btn btn-add" onclick="ajouterDepense()">💾 Enregistrer la dépense</button>
-          </div>
-
-          <div class="card">
-            <h2>Somme des Coûts</h2>
-            <div class="kpi-total">
-              <span class="kpi-title">Coût Total Global</span>
-              <span class="kpi-value" id="totalGlobal">0 Ar</span>
+            <button class="btn btn-add" onclick="ajouterDepense()">➕ Enregistrer</button>
+            
+            <div class="mini-total-box" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--card-border); text-align: center;">
+              <span style="font-size: 0.8rem; color: var(--text-secondary);">Total Général :</span>
+              <div id="totalGlobal" style="font-size: 1.3rem; font-weight: bold; color: var(--accent-purple);">0 Ar</div>
             </div>
-            <h3 class="sub-title">Total par Catégorie</h3>
-            <div id="repartitionCategories" class="category-summary"></div>
           </div>
 
-          <div class="card full-width">
-            <h2>Liste des Dépenses Enregistrées</h2>
-            <div id="listeDepenses" class="expense-list"></div>
+          <!-- Tableau synthétique des catégories (Défilable de gauche à droite) avec détails des dépenses dedans -->
+          <div class="card matrix-container-card">
+            <div class="matrix-header-title">
+              <h2>Tableau Synthétique par Catégorie (Détails des Dépenses)</h2>
+            </div>
+            
+            <div class="horizontal-scroll-wrapper">
+              <table class="data-table synthetic-matrix-table">
+                <thead id="categoryMatrixHead">
+                  <!-- Rempli dynamiquement en JS (une colonne par catégorie) -->
+                </thead>
+                <tbody id="categoryMatrixBody">
+                  <!-- Rempli dynamiquement en JS (piles de détails de dépenses par colonne) -->
+                </tbody>
+              </table>
+            </div>
           </div>
+
         </div>
       </section>
 
-      <!-- SECTION 3 : CALCULATEUR DE PRIX -->
-      <section id="page-calculateur" class="page-section">
-        <header class="page-header">
-          <h1>Calculateur de Prix & Revient</h1>
-          <p>Chiffrage précis par modèle de vêtement (Matières + Temps Atelier + Marge)</p>
-        </header>
+      <!-- PAGE : COUTURES / MODÈLES & CALCULATEUR -->
+      <section id="page-coutures" class="page-section">
+        <div class="page-header">
+          <h1>Catalogue & Calculateur de Prix</h1>
+          <p>Estimation des coûts de revient, calcul de marge et gestion des modèles.</p>
+        </div>
 
         <div class="grid">
+          <!-- FORMULAIRE CALCULATEUR DE PRIX -->
           <div class="card">
-            <h2>Fiche Technique & Référence</h2>
-            
+            <h2>🧮 Calculateur de Coût & Marge</h2>
+
             <div class="form-group">
-              <label for="modelRef">Référence du Modèle :</label>
-              <input type="text" id="modelRef" placeholder="Ex: CHM-2026-001">
+              <label for="coutureRef">Référence du Modèle</label>
+              <input type="text" id="coutureRef" placeholder="Ex: MOD-001">
             </div>
 
             <div class="form-group">
-              <label for="modelNom">Nom du Vêtement :</label>
-              <input type="text" id="modelNom" placeholder="Ex: Chemise Homme Col Italien">
+              <label for="coutureNom">Nom du Modèle</label>
+              <input type="text" id="coutureNom" placeholder="Ex: Polo Coton Piqué">
             </div>
 
             <div class="form-group">
-              <label for="modelTemps">Temps de Confection (en minutes) :</label>
-              <input type="number" id="modelTemps" placeholder="Ex: 70 min" min="0" oninput="calculerPrixRevient()">
-            </div>
-
-            <h3 class="sub-title">Matières & Fournitures</h3>
-
-            <div class="form-group">
-              <label for="tissuMetrage">Métrage Tissu (mètres) :</label>
-              <input type="number" id="tissuMetrage" placeholder="Ex: 1.6" step="0.1" min="0" oninput="calculerPrixRevient()">
+              <label for="coutureTemps">Temps de Fabrication (en minutes)</label>
+              <input type="number" id="coutureTemps" placeholder="Ex: 45" oninput="calculerPrixRevientLive()">
             </div>
 
             <div class="form-group">
-              <label for="tissuPrixMetre">Prix du Tissu au Mètre (Ar) :</label>
-              <input type="number" id="tissuPrixMetre" placeholder="Ex: 15000" min="0" oninput="calculerPrixRevient()">
+              <label for="coutureMetrage">Métrage Tissu (en mètres)</label>
+              <input type="number" id="coutureMetrage" step="0.1" placeholder="Ex: 1.5" oninput="calculerPrixRevientLive()">
             </div>
 
             <div class="form-group">
-              <label for="fournituresPrix">Fournitures / Mercerie (Ar) :</label>
-              <input type="number" id="fournituresPrix" placeholder="Ex: 5000" min="0" oninput="calculerPrixRevient()">
+              <label for="couturePrixMetre">Prix du Mètre de Tissu (Ar)</label>
+              <input type="number" id="couturePrixMetre" placeholder="Ex: 12000" oninput="calculerPrixRevientLive()">
             </div>
 
             <div class="form-group">
-              <label for="margePourcent">Marge Souhaitée (%) :</label>
-              <input type="number" id="margePourcent" value="40" min="0" oninput="calculerPrixRevient()">
+              <label for="coutureMercerie">Mercerie & Accessoires (Ar)</label>
+              <input type="number" id="coutureMercerie" placeholder="Ex: 3000" oninput="calculerPrixRevientLive()">
             </div>
+
+            <div class="form-group">
+              <label for="coutureMarge">Marge Souhaitée (%)</label>
+              <input type="number" id="coutureMarge" placeholder="Ex: 30" value="30" oninput="calculerPrixRevientLive()">
+            </div>
+
+            <button class="btn btn-add" onclick="enregistrerCouture()">💾 Enregistrer ce Modèle</button>
           </div>
 
+          <!-- RÉSULTAT EN DIRECT DU CALCULATEUR -->
           <div class="card">
-            <h2>Résultat du Chiffrage</h2>
-
+            <h2>📊 DÉTAIL DU CALCUL</h2>
+            
             <div class="calc-breakdown">
               <div class="calc-row">
-                <span>Matières Premières (Tissu) :</span>
-                <strong id="resTissu">0 Ar</strong>
+                <span>Coût Main d'Œuvre (Temps) :</span>
+                <strong id="calcMainOeuvre">0 Ar</strong>
               </div>
               <div class="calc-row">
-                <span>Mercerie & Accessoires :</span>
-                <strong id="resFournitures">0 Ar</strong>
+                <span>Coût Tissu :</span>
+                <strong id="calcTissu">0 Ar</strong>
               </div>
               <div class="calc-row">
-                <span>Main-d'œuvre & Atelier :</span>
-                <strong id="resAtelier">0 Ar</strong>
+                <span>Mercerie & Fournitures :</span>
+                <strong id="calcMercerie">0 Ar</strong>
               </div>
+
               <hr class="divider">
+
               <div class="calc-row highlight-row">
-                <span>Coût de Revient Total :</span>
-                <strong id="resPrixRevient">0 Ar</strong>
+                <span>Prix de Revient Total :</span>
+                <strong id="calcPrixRevient" style="color: var(--accent-blue);">0 Ar</strong>
               </div>
+
+              <div class="calc-row highlight-row">
+                <span>Prix de Vente Conseillé :</span>
+                <strong id="calcPrixVente" style="color: var(--accent-green); font-size: 1.2rem;">0 Ar</strong>
+              </div>
+
               <div class="calc-row">
-                <span>Bénéfice Net :</span>
-                <strong id="resBenefice" style="color: var(--accent-green);">0 Ar</strong>
+                <span>Marge Nette Estimée :</span>
+                <strong id="calcMargeMontant" style="color: var(--accent-purple);">0 Ar</strong>
               </div>
             </div>
+          </div>
 
-            <div class="kpi-total" style="margin-top: 20px;">
-              <span class="kpi-title">Prix de Vente Conseillé</span>
-              <span class="kpi-value" id="resPrixVente" style="font-size: 2rem;">0 Ar</span>
+          <!-- LISTE DES MODÈLES ENREGISTRÉS -->
+          <div class="card full-width">
+            <h2>Modèles Enregistrés dans le Catalogue</h2>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Réf.</th>
+                    <th>Nom du Modèle</th>
+                    <th>Temps</th>
+                    <th>Métrage</th>
+                    <th>Prix de Revient</th>
+                    <th>Prix Vente (Ar)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="listeCouturesTable">
+                  <!-- Rempli en JS -->
+                </tbody>
+              </table>
             </div>
-
-            <button class="btn btn-add" style="margin-top: 15px;" onclick="ajouterALaListeCoutures()">
-              ➕ Ajouter à la liste des coutures
-            </button>
           </div>
         </div>
       </section>
 
-      <!-- SECTION 4 : LISTE DES COUTURES ENREGISTRÉES -->
-      <section id="page-coutures" class="page-section">
-        <header class="page-header">
-          <h1>Répertoire des Coutures & Modèles</h1>
-          <p>Modifier le prix de vente et passer directement une commande client</p>
-        </header>
-
-        <div class="card full-width">
-          <h2>Catalogue des Modèles</h2>
-          <div style="overflow-x: auto;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Réf.</th>
-                  <th>Modèle</th>
-                  <th>Temps</th>
-                  <th>Tissu</th>
-                  <th>Coût Revient</th>
-                  <th>Prix Vente (Ar)</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="listeCouturesTable">
-                <!-- Injecté dynamiquement par JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION 5 : COMMANDES CLIENTS -->
+      <!-- PAGE : COMMANDES -->
       <section id="page-commandes" class="page-section">
-        <header class="page-header">
-          <h1>Commandes Clients & Suivi</h1>
-          <p>Historique des commandes passées via le catalogue ou la saisie manuelle</p>
-        </header>
+        <div class="page-header">
+          <h1>Gestion des Commandes Clients</h1>
+          <p>Suivi des acomptes, solde dû et prévisions de livraison.</p>
+        </div>
 
         <div class="grid">
+          <!-- Formulaire Commande Manuelle -->
           <div class="card">
-            <h2>➕ Saisie Manuelle de Commande</h2>
+            <h2>Saisie Manuelle d'une Commande</h2>
+            
             <div class="form-group">
-              <label for="cmdClient">Nom du Client :</label>
+              <label for="cmdClient">Nom du Client</label>
               <input type="text" id="cmdClient" placeholder="Ex: Jean Dupont">
             </div>
+
             <div class="form-group">
-              <label for="cmdModele">Vêtement / Modèle :</label>
-              <input type="text" id="cmdModele" placeholder="Ex: 5 Chemises Homme">
+              <label for="cmdModele">Description / Modèle</label>
+              <input type="text" id="cmdModele" placeholder="Ex: 5x Chemises Blanches">
             </div>
+
             <div class="form-group">
-              <label for="cmdTotal">Prix Total Commande (Ar) :</label>
-              <input type="number" id="cmdTotal" placeholder="0" min="0">
+              <label for="cmdTotal">Montant Total (Ar)</label>
+              <input type="number" id="cmdTotal" placeholder="Ex: 150000" min="0">
             </div>
+
             <div class="form-group">
-              <label for="cmdAcompte">Acompte Payé (Ar) :</label>
-              <input type="number" id="cmdAcompte" placeholder="0" min="0">
+              <label for="cmdAcompte">Acompte Versé (Ar)</label>
+              <input type="number" id="cmdAcompte" placeholder="Ex: 50000" min="0">
             </div>
+
             <div class="form-group">
-              <label for="cmdDateLivraison">Date de Livraison Prévue :</label>
+              <label for="cmdDateLivraison">Date de Livraison Prévue</label>
               <input type="date" id="cmdDateLivraison">
             </div>
-            <button class="btn btn-add" onclick="enregistrerCommandeManuelle()">🧵 Enregistrer la commande</button>
+
+            <button class="btn btn-add" onclick="enregistrerCommandeManuelle()">📋 Valider la Commande</button>
           </div>
 
-          <div class="card full-width">
-            <h2>Suivi des Commandes Clients</h2>
-            <div id="listeCommandes" class="expense-list"></div>
+          <!-- Liste des Commandes En Cours -->
+          <div class="card">
+            <h2>Commandes enregistrées</h2>
+            <div id="listeCommandes" class="expense-list">
+              <!-- Rempli en JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE : PLANNING -->
+      <section id="page-planning" class="page-section">
+        <div class="page-header">
+          <h1>Planning des Livraisons</h1>
+          <p>Vue calendaire des livraisons prévues et urgences.</p>
+        </div>
+
+        <div class="calendar-layout">
+          <div class="card">
+            <div id="calendar"></div>
+          </div>
+
+          <div class="card">
+            <h2>Prochaines Échéances</h2>
+            <div id="upcomingDeliveries" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Rempli en JS -->
+            </div>
           </div>
         </div>
       </section>
@@ -339,7 +349,5 @@
   </div>
 
   <script src="script.js"></script>
-  <script src="planning.js"></script>
-  <script src="calculateur.js"></script>
 </body>
 </html>

@@ -1,153 +1,166 @@
-// Key de stockage dans le LocalStorage
-const STORAGE_KEY = 'couture_gestion_stock';
+const STORAGE_KEY = 'texstock_data';
 
-// Structure de données initiale si aucun stock n'est enregistré
-const initialStock = [
-  { id: 1, nom: 'Tissu Coton Blanc', categorie: 'Tissu', quantite: 15, unite: 'mètres', prix: 12000 },
-  { id: 2, nom: 'Fil Noir Haute Résistance', categorie: 'Mercerie', quantite: 8, unite: 'bobines', prix: 2500 },
-  { id: 3, nom: 'Fermeture Éclair 20cm', categorie: 'Accessoire', quantite: 25, unite: 'pièces', prix: 1000 }
+// Données par défaut si le localStorage est vide
+const defaultStock = [
+  { code: 'TIS-COT-01', name: 'Coton Blanc 180g', category: 'Tissu', qty: 120, alert: 20, unit: 'Mètres', location: 'Etagère A1' },
+  { code: 'TIS-LIN-02', name: 'Lin Bleu Marine', category: 'Tissu', qty: 12, alert: 15, unit: 'Mètres', location: 'Etagère A2' },
+  { code: 'BTN-BOIS-15', name: 'Bouton Bois 15mm', category: 'Mercerie', qty: 450, alert: 100, unit: 'Pièces', location: 'Tiroir B' },
+  { code: 'FIL-ROUGE-01', name: 'Bobine Fil Rouge', category: 'Fil', qty: 3, alert: 5, unit: 'Bobines', location: 'Tiroir C' }
 ];
 
-// Variable globale contenant la liste des articles
-let stockList = [];
+let stock = [];
 
-// ==========================================
-// 1. GESTION DU LOCALSTORAGE (Sauvegarde/Chargement)
-// ==========================================
-
-/**
- * Charge les données depuis le localStorage ou initialise si vide
- */
-function chargerStock() {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (data) {
+// Charger depuis le localStorage ou initialiser
+function loadStock() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
     try {
-      stockList = JSON.parse(data);
+      stock = JSON.parse(saved);
     } catch (e) {
-      console.error("Erreur de lecture du stock:", e);
-      stockList = [...initialStock];
-      sauvegarderStock();
+      console.error("Erreur de lecture du localStorage, chargement des données par défaut.", e);
+      stock = [...defaultStock];
+      saveStock();
     }
   } else {
-    // Premier démarrage : charger les données de démo et sauvegarder
-    stockList = [...initialStock];
-    sauvegarderStock();
+    stock = [...defaultStock];
+    saveStock();
   }
 }
 
-/**
- * Enregistre l'état actuel de `stockList` dans le localStorage
- */
-function sauvegarderStock() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(stockList));
+// Sauvegarder dans le localStorage
+function saveStock() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stock));
 }
-
-// ==========================================
-// 2. FONCTIONS DE GESTION DU STOCK (CRUD)
-// ==========================================
-
-/**
- * Ajoute un nouvel article et sauvegarde
- */
-function ajouterArticle(nom, categorie, quantite, unite, prix) {
-  const nouveauProduit = {
-    id: Date.now(), // Identifiant unique basé sur la date
-    nom: nom.trim(),
-    categorie: categorie.trim(),
-    quantite: Number(quantite),
-    unite: unite.trim(),
-    prix: Number(prix)
-  };
-
-  stockList.push(nouveauProduit);
-  sauvegarderStock();
-  afficherStock();
-}
-
-/**
- * Supprime un article selon son ID et sauvegarde
- */
-function supprimerArticle(id) {
-  stockList = stockList.filter(article => article.id !== id);
-  sauvegarderStock();
-  afficherStock();
-}
-
-/**
- * Modifie la quantité d'un article (+1 ou -1) et sauvegarde
- */
-function ajusterQuantite(id, variation) {
-  const article = stockList.find(a => a.id === id);
-  if (article) {
-    article.quantite = Math.max(0, article.quantite + variation); // Empêche les quantités négatives
-    sauvegarderStock();
-    afficherStock();
-  }
-}
-
-// ==========================================
-// 3. AFFICHAGE ET INTERFACE UTILISATEUR (DOM)
-// ==========================================
-
-/**
- * Rendu dynamique de la table ou de la liste dans l'interface
- */
-function afficherStock() {
-  const tableBody = document.getElementById('stockTableBody');
-  if (!tableBody) return;
-
-  tableBody.innerHTML = '';
-
-  if (stockList.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Aucun article dans le stock.</td></tr>`;
-    return;
-  }
-
-  stockList.forEach(article => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${article.nom}</td>
-      <td>${article.categorie}</td>
-      <td>
-        <button onclick="ajusterQuantite(${article.id}, -1)">-</button>
-        <strong>${article.quantite}</strong> ${article.unite}
-        <button onclick="ajusterQuantite(${article.id}, 1)">+</button>
-      </td>
-      <td>${article.prix.toLocaleString()} Ar</td>
-      <td>${(article.quantite * article.prix).toLocaleString()} Ar</td>
-      <td>
-        <button class="btn-danger" onclick="supprimerArticle(${article.id})">Supprimer</button>
-      </td>
-    `;
-    tableBody.appendChild(row);
-  });
-}
-
-// ==========================================
-// 4. INITIALISATION ET ÉVÉNEMENTS
-// ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Charger les données au démarrage
-  chargerStock();
-  afficherStock();
-
-  // 2. Gestion de la soumission du formulaire d'ajout
-  const formAjout = document.getElementById('formAjoutStock');
-  if (formAjout) {
-    formAjout.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const nom = document.getElementById('nomArticle').value;
-      const categorie = document.getElementById('catArticle').value;
-      const quantite = document.getElementById('quantiteArticle').value;
-      const unite = document.getElementById('uniteArticle').value || 'pcs';
-      const prix = document.getElementById('prixArticle').value || 0;
-
-      if (nom && quantite) {
-        ajouterArticle(nom, categorie, quantite, unite, prix);
-        formAjout.reset(); // Réinitialiser les champs du formulaire
-      }
-    });
-  }
+  loadStock();
+  renderTables();
 });
+
+// Soumission du formulaire d'entrée
+function submitStock(e) {
+  e.preventDefault();
+
+  const code = document.getElementById('code').value.toUpperCase().trim();
+  const name = document.getElementById('name').value.trim();
+  const category = document.getElementById('category').value;
+  const unit = document.getElementById('unit').value;
+  const qty = parseFloat(document.getElementById('qty').value);
+  const alertVal = parseFloat(document.getElementById('alert').value);
+  const location = document.getElementById('location').value.trim() || 'A-00';
+
+  const item = stock.find(i => i.code === code);
+  if (item) {
+    item.qty += qty;
+    item.name = name;
+    item.category = category;
+    item.unit = unit;
+    item.alert = alertVal;
+    item.location = location;
+  } else {
+    stock.push({ code, name, category, qty, alert: alertVal, unit, location });
+  }
+
+  saveStock();
+  document.getElementById('add-form').reset();
+  renderTables();
+}
+
+// Action de déduction rapide de stock (Sortie Coupe)
+function deduceStock(code) {
+  const item = stock.find(i => i.code === code);
+  if (item) {
+    const amount = prompt(`Métrage/Quantité à retirer pour ${item.name} (${item.unit}) :`);
+    if (amount !== null && !isNaN(amount) && amount.trim() !== '') {
+      const val = parseFloat(amount);
+      if (val > 0) {
+        item.qty = Math.max(0, item.qty - val);
+        saveStock();
+        renderTables();
+      }
+    }
+  }
+}
+
+// Action de suppression d'un article avec confirmation
+function deleteStock(code) {
+  const item = stock.find(i => i.code === code);
+  if (item) {
+    const confirmation = confirm(`Êtes-vous sûr de vouloir supprimer définitivement l'article "${item.name}" (${item.code}) ?`);
+    if (confirmation) {
+      stock = stock.filter(i => i.code !== code);
+      saveStock();
+      renderTables();
+    }
+  }
+}
+
+// Affichage et mise à jour des données
+function renderTables() {
+  const searchInput = document.getElementById('search');
+  const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  
+  const listTbody = document.getElementById('list-tbody');
+  const remainTbody = document.getElementById('remain-tbody');
+  
+  if (!listTbody || !remainTbody) return;
+
+  listTbody.innerHTML = '';
+  remainTbody.innerHTML = '';
+
+  let alertCount = 0;
+
+  stock.forEach(item => {
+    // Calcul des alertes globales
+    if (item.qty <= item.alert) {
+      alertCount++;
+    }
+
+    // Calcul du badge d'état pour le tableau
+    let statusBadge = '<span class="badge ok">Suffisant</span>';
+    if (item.qty <= 0) {
+      statusBadge = '<span class="badge danger">Rupture</span>';
+    } else if (item.qty <= item.alert) {
+      statusBadge = '<span class="badge warning">Faible</span>';
+    }
+
+    // Filtrage par recherche
+    if (item.name.toLowerCase().includes(searchVal) || item.code.toLowerCase().includes(searchVal)) {
+      // Tableau 1 : Liste & Emplacement + Action de suppression
+      listTbody.innerHTML += `
+        <tr>
+          <td><strong>${item.code}</strong></td>
+          <td>${item.name}</td>
+          <td>${item.category}</td>
+          <td>${item.location}</td>
+          <td>
+            <button class="btn-delete" onclick="deleteStock('${item.code}')" title="Supprimer l'article">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+
+      // Tableau 2 : Reste & Actions de sortie
+      remainTbody.innerHTML += `
+        <tr>
+          <td>${item.name}</td>
+          <td><strong>${item.qty} ${item.unit}</strong></td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn-out" onclick="deduceStock('${item.code}')" title="Retirer du stock">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+  });
+
+  // Mise à jour des statistiques de l'en-tête
+  const totalArticlesEl = document.getElementById('total-articles');
+  const totalAlertsEl = document.getElementById('total-alerts');
+
+  if (totalArticlesEl) totalArticlesEl.textContent = stock.length;
+  if (totalAlertsEl) totalAlertsEl.textContent = alertCount;
+}

@@ -38,6 +38,7 @@ const subCategories = {
 let depenses = chargerDonnees('depenses');
 let listeCoutures = chargerDonnees('listeCoutures');
 let commandes = chargerDonnees('commandes');
+let calendar = null; 
 
 document.addEventListener('DOMContentLoaded', () => {
   mettreAJourInterface();
@@ -68,6 +69,16 @@ function formaterAriary(montant) {
   return Math.round(valeur).toLocaleString('fr-FR') + " Ar";
 }
 
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function naviguer(pageId) {
   document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
   document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
@@ -81,7 +92,7 @@ function naviguer(pageId) {
   });
   if (activeBtn) activeBtn.classList.add('active');
 
-  if (pageId === 'planning' && typeof initialiserCalendrier === 'function') {
+  if (pageId === 'planning') {
     setTimeout(() => {
       initialiserCalendrier();
     }, 100);
@@ -110,9 +121,11 @@ function mettreAJourInterface() {
   if (dashCout) dashCout.innerText = formaterAriary(coutMinute) + "/min";
   if (totalGlobal) totalGlobal.innerText = formaterAriary(totalDepenses);
 
-  afficherListeDepenses();
+  afficherTableauSynthetiqueCategories();
   afficherListeCoutures();
   afficherListeCommandes();
+  mettreAJourEvenementsCalendrier();
+  calculerPrixRevientLive(); 
 }
 
 // ==========================================
@@ -204,7 +217,7 @@ function ajouterDepense() {
     return;
   }
 
-  const nomAffiche = article ? `${article} ${note ? '(' + note + ')' : ''}` : (note || categorie);
+  const nomAffiche = article ? `${article} ${note ? '(' + note + ')' : ''}` : (note || 'Dépense diverse');
   const maintenant = new Date();
   const dateStr = maintenant.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const heureStr = maintenant.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -232,79 +245,145 @@ function supprimerDepense(index) {
   mettreAJourInterface();
 }
 
-function afficherListeDepenses() {
-  const container = document.getElementById('listeDepenses');
-  if (!container) return;
-  container.innerHTML = '';
+function afficherTableauSynthetiqueCategories() {
+  const headContainer = document.getElementById('categoryMatrixHead');
+  const bodyContainer = document.getElementById('categoryMatrixBody');
+  if (!headContainer || !bodyContainer) return;
 
-  if (depenses.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Aucune dépense enregistrée (0 Ar).</p>';
-    return;
-  }
+  headContainer.innerHTML = '';
+  bodyContainer.innerHTML = '';
 
-  const depensesParCategorie = depenses.reduce((acc, depense, index) => {
-    const cat = depense.categorie || 'Autres';
-    if (!acc[cat]) {
-      acc[cat] = { articles: [], total: 0 };
-    }
-    acc[cat].articles.push({ ...depense, originalIndex: index });
-    acc[cat].total += depense.montant || 0;
-    return acc;
-  }, {});
+  const categories = Object.keys(subCategories);
 
-  Object.keys(depensesParCategorie).forEach(cat => {
-    const groupe = depensesParCategorie[cat];
+  const trHead = document.createElement('tr');
+  categories.forEach(cat => {
+    const totalCat = depenses
+      .filter(d => d.categorie === cat)
+      .reduce((sum, d) => sum + (d.montant || 0), 0);
 
-    const catContainer = document.createElement('div');
-    catContainer.className = 'category-group';
-    catContainer.style.marginBottom = '20px';
-
-    const header = document.createElement('div');
-    header.className = 'category-header';
-    header.style.cssText = `
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      padding: 10px 14px; 
-      background-color: #f0f4f8; 
-      color: #1f2937;
-      border-radius: 6px; 
-      font-weight: bold; 
-      margin-bottom: 8px;
+    const th = document.createElement('th');
+    th.innerHTML = `
+      <div style="font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">${escapeHtml(cat)}</div>
+      <div style="font-size: 0.78rem; color: var(--accent-purple); font-weight: 600;">Total: ${formaterAriary(totalCat)}</div>
     `;
-    header.innerHTML = `
-      <span>📂 ${cat} (${groupe.articles.length})</span>
-      <span style="color: var(--accent-color, #1f2937);">Somme : ${formaterAriary(groupe.total)}</span>
-    `;
-    catContainer.appendChild(header);
-
-    groupe.articles.forEach(item => {
-      const el = document.createElement('div');
-      el.className = 'expense-item';
-      el.style.cssText = `
-        display: grid; 
-        grid-template-columns: 2fr 1.5fr 1fr auto; 
-        gap: 10px; 
-        align-items: center; 
-        padding: 8px 12px; 
-        border-bottom: 1px solid var(--border-color, #e5e7eb);
-      `;
-      el.innerHTML = `
-        <span><strong>${item.nom}</strong></span>
-        <span class="expense-date" style="font-size: 0.85rem; color: gray;">🕒 ${item.date}</span>
-        <span style="text-align: right; font-weight: 600;">${formaterAriary(item.montant)}</span>
-        <button class="btn btn-danger" style="padding: 2px 6px;" onclick="supprimerDepense(${item.originalIndex})">✕</button>
-      `;
-      catContainer.appendChild(el);
-    });
-
-    container.appendChild(catContainer);
+    trHead.appendChild(th);
   });
+  headContainer.appendChild(trHead);
+
+  const trBody = document.createElement('tr');
+  categories.forEach(cat => {
+    const td = document.createElement('td');
+    
+    const depensesCat = depenses
+      .map((d, index) => ({ ...d, originalIndex: index }))
+      .filter(d => d.categorie === cat);
+
+    const pileDiv = document.createElement('div');
+    pileDiv.className = 'expense-cell-pile';
+
+    if (depensesCat.length === 0) {
+      pileDiv.innerHTML = `<div class="empty-category-notice">Aucune dépense</div>`;
+    } else {
+      depensesCat.reverse().forEach(item => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'expense-cell-card';
+        cardDiv.innerHTML = `
+          <div class="expense-cell-title">${escapeHtml(item.nom)}</div>
+          <div class="expense-cell-meta">
+            <span>📂 ${escapeHtml(item.categorie)}</span>
+            <span>🕒 ${escapeHtml(item.date)}</span>
+          </div>
+          <div class="expense-cell-footer">
+            <span class="expense-cell-amount">${formaterAriary(item.montant)}</span>
+            <button class="btn btn-danger" onclick="supprimerDepense(${item.originalIndex})" title="Supprimer">✕</button>
+          </div>
+        `;
+        pileDiv.appendChild(cardDiv);
+      });
+    }
+
+    td.appendChild(pileDiv);
+    trBody.appendChild(td);
+  });
+  bodyContainer.appendChild(trBody);
 }
 
 // ==========================================
-// 5. GESTION DES COUTURES / MODÈLES
+// 5. SCRIPT CALCULATEUR DE PRIX & MODÈLES
 // ==========================================
+
+function calculerPrixRevientLive() {
+  const totalDepenses = depenses.reduce((sum, d) => sum + (d.montant || 0), 0);
+  const coutMinute = CAPACITE_MINUTES_MOIS > 0 ? (totalDepenses / CAPACITE_MINUTES_MOIS) : 0;
+
+  const temps = parseFloat(document.getElementById('coutureTemps')?.value || 0);
+  const metrage = parseFloat(document.getElementById('coutureMetrage')?.value || 0);
+  const prixMetre = parseFloat(document.getElementById('couturePrixMetre')?.value || 0);
+  const mercerie = parseFloat(document.getElementById('coutureMercerie')?.value || 0);
+  const margePourcent = parseFloat(document.getElementById('coutureMarge')?.value || 0);
+
+  const coutMainOeuvre = temps * coutMinute;
+  const coutTissu = metrage * prixMetre;
+  const prixRevient = coutMainOeuvre + coutTissu + mercerie;
+  
+  const prixVente = margePourcent < 100 ? (prixRevient / (1 - (margePourcent / 100))) : (prixRevient * 2);
+  const margeMontant = prixVente - prixRevient;
+
+  const elMainOeuvre = document.getElementById('calcMainOeuvre');
+  const elTissu = document.getElementById('calcTissu');
+  const elMercerie = document.getElementById('calcMercerie');
+  const elPrixRevient = document.getElementById('calcPrixRevient');
+  const elPrixVente = document.getElementById('calcPrixVente');
+  const elMargeMontant = document.getElementById('calcMargeMontant');
+
+  if (elMainOeuvre) elMainOeuvre.innerText = formaterAriary(coutMainOeuvre);
+  if (elTissu) elTissu.innerText = formaterAriary(coutTissu);
+  if (elMercerie) elMercerie.innerText = formaterAriary(mercerie);
+  if (elPrixRevient) elPrixRevient.innerText = formaterAriary(prixRevient);
+  if (elPrixVente) elPrixVente.innerText = formaterAriary(prixVente);
+  if (elMargeMontant) elMargeMontant.innerText = formaterAriary(margeMontant);
+
+  return { prixRevient, prixVente };
+}
+
+function enregistrerCouture() {
+  const refInput = document.getElementById('coutureRef');
+  const nomInput = document.getElementById('coutureNom');
+  const tempsInput = document.getElementById('coutureTemps');
+  const metrageInput = document.getElementById('coutureMetrage');
+
+  const ref = refInput ? refInput.value.trim() : '';
+  const nom = nomInput ? nomInput.value.trim() : '';
+  const temps = parseFloat(tempsInput ? tempsInput.value : 0) || 0;
+  const metrage = parseFloat(metrageInput ? metrageInput.value : 0) || 0;
+
+  if (!nom) {
+    alert("Veuillez donner un nom à votre modèle.");
+    return;
+  }
+
+  const { prixRevient, prixVente } = calculerPrixRevientLive();
+
+  listeCoutures.push({
+    ref: ref || `MOD-${listeCoutures.length + 1}`,
+    nom: nom,
+    temps: temps,
+    metrage: metrage,
+    prixRevient: Math.round(prixRevient),
+    prixVente: Math.round(prixVente)
+  });
+
+  sauvegarderDonnees();
+
+  if (refInput) refInput.value = '';
+  if (nomInput) nomInput.value = '';
+  if (tempsInput) tempsInput.value = '';
+  if (metrageInput) metrageInput.value = '';
+
+  calculerPrixRevientLive();
+  afficherListeCoutures();
+  alert("Modèle enregistré dans le catalogue !");
+}
 
 function afficherListeCoutures() {
   const containerTable = document.getElementById('listeCouturesTable');
@@ -320,8 +399,8 @@ function afficherListeCoutures() {
     listeCoutures.forEach((item, index) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><strong>${item.ref || 'REF-' + (index + 1)}</strong></td>
-        <td>${item.nom}</td>
+        <td><strong>${escapeHtml(item.ref || 'REF-' + (index + 1))}</strong></td>
+        <td>${escapeHtml(item.nom)}</td>
         <td>⏱️ ${item.temps || 0} min</td>
         <td>🧵 ${item.metrage || 0} m</td>
         <td>${formaterAriary(item.prixRevient || 0)}</td>
@@ -434,10 +513,10 @@ function enregistrerCommandeManuelle() {
 
   sauvegarderDonnees();
 
-  clientInput.value = '';
-  modeleInput.value = '';
-  totalInput.value = '';
-  acompteInput.value = '';
+  if (clientInput) clientInput.value = '';
+  if (modeleInput) modeleInput.value = '';
+  if (totalInput) totalInput.value = '';
+  if (acompteInput) acompteInput.value = '';
   if (dateInput) dateInput.value = '';
 
   mettreAJourInterface();
@@ -456,7 +535,7 @@ function afficherListeCommandes() {
   container.innerHTML = '';
 
   if (commandes.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Aucune commande en cours.</p>';
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Aucune commande en cours.</p>';
     return;
   }
 
@@ -469,16 +548,115 @@ function afficherListeCommandes() {
       gap: 10px; 
       align-items: center; 
       padding: 10px; 
-      border-bottom: 1px solid var(--border-color, #e5e7eb);
+      border-bottom: 1px solid var(--card-border);
     `;
     card.innerHTML = `
-      <span><strong>👤 ${cmd.client}</strong></span>
-      <span>🧵 ${cmd.modele}</span>
+      <span><strong>👤 ${escapeHtml(cmd.client)}</strong></span>
+      <span>🧵 ${escapeHtml(cmd.modele)}</span>
       <span>Total: ${formaterAriary(cmd.total)}</span>
-      <span style="color: ${cmd.reste > 0 ? '#e67e22' : '#27ae60'};">Reste: ${formaterAriary(cmd.reste)}</span>
-      <span style="font-size: 0.85rem; color: gray;">📅 ${cmd.dateLivraison || 'Non définie'}</span>
+      <span style="color: ${cmd.reste > 0 ? '#d97706' : '#059669'};">Reste: ${formaterAriary(cmd.reste)}</span>
+      <span style="font-size: 0.85rem; color: var(--text-secondary);">📅 ${escapeHtml(cmd.dateLivraison || 'Non définie')}</span>
       <button class="btn btn-danger" style="padding: 2px 6px;" onclick="supprimerCommande(${index})">✕</button>
     `;
     container.appendChild(card);
+  });
+}
+
+// ==========================================
+// 7. GESTION DU CALENDRIER & LIVRAISONS
+// ==========================================
+
+function obtenirEvenementsCalendrier() {
+  return commandes
+    .filter(cmd => cmd.dateLivraison)
+    .map(cmd => ({
+      title: `${cmd.client} - ${cmd.modele}`,
+      start: cmd.dateLivraison,
+      allDay: true,
+      backgroundColor: cmd.reste > 0 ? '#d97706' : '#059669',
+      borderColor: cmd.reste > 0 ? '#b45309' : '#047857'
+    }));
+}
+
+function initialiserCalendrier() {
+  const calendarEl = document.getElementById('calendar');
+  if (!calendarEl) return;
+
+  if (calendar) {
+    calendar.render();
+    afficherProchainesLivraisons();
+    return;
+  }
+
+  if (typeof FullCalendar !== 'undefined') {
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'fr',
+      height: 'auto',
+      aspectRatio: 1.35,
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek'
+      },
+      buttonText: {
+        today: "Aujourd'hui",
+        month: 'Mois',
+        week: 'Semaine'
+      },
+      events: obtenirEvenementsCalendrier()
+    });
+    calendar.render();
+    afficherProchainesLivraisons();
+  }
+}
+
+function mettreAJourEvenementsCalendrier() {
+  if (!calendar) return;
+  calendar.removeAllEvents();
+  calendar.addEventSource(obtenirEvenementsCalendrier());
+  afficherProchainesLivraisons();
+}
+
+function afficherProchainesLivraisons() {
+  const listEl = document.getElementById('upcomingDeliveries');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+
+  if (commandes.length === 0) {
+    listEl.innerHTML = '<p style="color:var(--text-secondary); font-size:0.85rem; padding: 10px;">Aucune livraison enregistrée.</p>';
+    return;
+  }
+
+  const triees = [...commandes].sort((a, b) => new Date(a.dateLivraison || '9999-12-31') - new Date(b.dateLivraison || '9999-12-31'));
+
+  triees.forEach(c => {
+    const item = document.createElement('div');
+    item.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px;
+      background: var(--input-bg);
+      border-left: 4px solid ${c.reste > 0 ? '#d97706' : '#059669'};
+      border-radius: 4px;
+      margin-bottom: 6px;
+      border: 1px solid var(--card-border);
+      border-left-width: 4px;
+    `;
+    item.innerHTML = `
+      <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+        <strong style="font-size:0.9rem; color:var(--text-primary);">👤 ${escapeHtml(c.client)}</strong>
+        <span style="font-size:0.75rem; color:var(--text-secondary);">📅 ${escapeHtml(c.dateLivraison || 'N/A')}</span>
+      </div>
+      <div style="font-size:0.8rem; color:var(--text-secondary);">
+        🧵 ${escapeHtml(c.modele)}
+      </div>
+      <div style="font-size:0.8rem; font-weight:600; color:${c.reste > 0 ? '#d97706' : '#059669'};">
+        ${c.reste > 0 ? 'Reste : ' + formaterAriary(c.reste) : 'Payé en totalité (' + formaterAriary(c.total) + ')'}
+      </div>
+    `;
+    listEl.appendChild(item);
   });
 }
